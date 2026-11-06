@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Streaming App</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #f4f4f9; color: #333; }
+        
+        /* Auth Gate */
+        #auth-container {
+            max-width: 400px; margin: 80px auto; background: #fff; padding: 30px;
+            border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        #auth-container h2 { margin-bottom: 20px; text-align: center; color: #4f46e5; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .btn { width: 100%; background: #4f46e5; color: white; padding: 10px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+        .btn:hover { background: #4338ca; }
+
+        /* Main App Dashboard */
+        #app-container { display: none; padding: 20px; max-width: 1000px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* Categories */
+        .categories { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .cat-btn { background: #e0e7ff; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; color: #4338ca; white-space: nowrap; }
+        .cat-btn.active, .cat-btn:hover { background: #4f46e5; color: white; }
+
+        /* Content Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); }
+        .card img { width: 100%; height: 140px; object-fit: cover; }
+        .card-body { padding: 15px; }
+        .card-body span { font-size: 12px; background: #f3f4f6; padding: 3px 8px; border-radius: 4px; color: #6b7280; }
+        .card-body h3 { font-size: 16px; margin: 10px 0 5px; }
+    </style>
+</head>
+<body>
+
+    <!-- ပထမအကြိမ် ဝင်ရောက်သူများအတွက် ဖောင် -->
+    <div id="auth-container">
+        <h2>App သို့ ဝင်ရောက်ရန်</h2>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>အမည် (Name)</label>
+                <input type="text" id="username" required placeholder="သင့်နာမည်ထည့်ပါ">
+            </div>
+            <div class="form-group">
+                <label>အီးမေးလ် (Email)</label>
+                <input type="email" id="email" required placeholder="example@gmail.com">
+            </div>
+            <button type="submit" class="btn">စတင်ကြည့်ရှုမည်</button>
+        </form>
+    </div>
+
+    <!-- App ပင်မစာမျက်နှာ ( Login ဝင်ပြီးမှ ပေါ်မည် ) -->
+    <div id="app-container">
+        <header>
+            <h1 style="font-size: 20px; color: #4f46e5;">my Media App</h1>
+            <span id="userWelcome" style="font-weight: bold; color: #374151;"></span>
+        </header>
+
+        <!-- ကဏ္ဍခွဲခလုတ်များ -->
+        <div class="categories">
+            <button class="cat-btn active" onclick="filterContent('all')">အားလုံး</button>
+            <button class="cat-btn" onclick="filterContent('photo')">ဓာတ်ပုံများ</button>
+            <button class="cat-btn" onclick="filterContent('article')">ဆောင်းပါးများ</button>
+            <button class="cat-btn" onclick="filterContent('story')">ဝတ္ထုတိုများ</button>
+            <button class="cat-btn" onclick="filterContent('movie')">ရုပ်ရှင်များ</button>
+        </div>
+
+        <!-- Content ပြမည့် Grid -->
+        <div class="grid" id="contentGrid"></div>
+    </div>
+
+    <script>
+        // နမူနာ Content အချက်အလက်များ
+        const contents = [
+            { title: "သဘာဝရှုခင်းလှလှများ", category: "photo", img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb" },
+            { title: "AI နည်းပညာအကြောင်း သိကောင်းစရာ", category: "article", img: "https://images.unsplash.com/photo-1518770660439-4636190af475" },
+            { title: "မိုးလင်းချိန်ဝတ္ထုတို", category: "story", img: "https://images.unsplash.com/photo-1455390582262-044cdead277a" },
+            { title: "အက်ရှင်ရုပ်ရှင်သုံးသပ်ချက်", category: "movie", img: "https://images.unsplash.com/photo-1485846234645-a62644f84728" }
+        ];
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const name = document.getElementById('username').value;
+            localStorage.setItem('appName', name);
+            showApp(name);
+        }
+
+        function showApp(name) {
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('app-container').style.display = 'block';
+            document.getElementById('userWelcome').innerText = `ကြိုဆိုပါတယ်၊ ${name}`;
+            displayContents(contents);
+        }
+
+        function displayContents(items) {
+            const grid = document.getElementById('contentGrid');
+            grid.innerHTML = '';
+            items.forEach(item => {
+                grid.innerHTML += `
+                    <div class="card">
+                        <img src="${item.img}" alt="${item.title}">
+                        <div class="card-body">
+                            <span>${item.category.toUpperCase()}</span>
+                            <h3>${item.title}</h3>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterContent(category) {
+            // Active Button Style ပြောင်းရန်
+            document.querySelectorAll('.cat-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            if(category === 'all') {
+                displayContents(contents);
+            } else {
+                const filtered = contents.filter(item => item.category === category);
+                displayContents(items = filtered);
+            }
+        }
+
+        // အရင် Login ဝင်ထားပြီးသားလား စစ်ဆေးရန်
+        window.onload = function() {
+            const savedName = localStorage.getItem('appName');
+            if(savedName) {
+                showApp(savedName);
+            }
+        }
+    </script>
+</body>
+</html>
